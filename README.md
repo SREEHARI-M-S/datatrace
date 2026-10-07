@@ -15,7 +15,8 @@ execution events and evidence-backed root-cause analysis.
 ```bash
 pip install -e ".[dev]"
 datatrace --help
-datatrace explain --record customer_id=183729 --store ./events.jsonl
+datatrace explain --record customer_id=183729
+datatrace explain --record customer_id=183729 --store examples/sample_events.jsonl
 ```
 
 MIT License

@@ -17,14 +17,18 @@ console = Console()
 @app.command()
 def explain(
     record: str = typer.Option(..., "--record", help="Key=value, e.g. customer_id=183729"),
-    store: Path = typer.Option(..., help="JSONL event store path"),
+    store: Path = typer.Option(
+        Path("examples/sample_events.jsonl"),
+        help="JSONL event store path",
+    ),
 ) -> None:
+    """Trace a record through recorded transformation events."""
     if "=" not in record:
         raise typer.BadParameter("Use --record key=value")
     record_id = record.split("=", 1)[1]
     events = EventStore(store).load_for_record(record_id)
     if not events:
-        console.print("[yellow]No events found for record.[/yellow]")
+        console.print(f"[yellow]No events found for record {record_id} in {store}[/yellow]")
         raise typer.Exit(code=1)
 
     lineage = build_lineage(events)
@@ -44,9 +48,23 @@ def explain(
                 "ROOT CAUSE",
                 finding.summary,
                 f"Transformation: {finding.transformation}",
+                f"Operation: {finding.evidence.get('operation', 'unknown')}",
             ],
         )
+        before = finding.evidence.get("before")
+        after = finding.evidence.get("after")
+        if before or after:
+            lines.append(f"Before: {before}")
+            lines.append(f"After: {after}")
+
     console.print(Panel("\n".join(lines), title=f"Record {record_id}"))
+
+
+@app.command()
+def version() -> None:
+    from datatrace import __version__
+
+    console.print(f"datatrace {__version__}")
 
 
 if __name__ == "__main__":

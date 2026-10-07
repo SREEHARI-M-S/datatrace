@@ -27,4 +27,4 @@ def test_first_change() -> None:
     ]
     finding = first_significant_change(events)
     assert finding is not None
-    assert finding.transformation == "a.sql"
+    assert finding.transformation == "identity_mapping.sql"
