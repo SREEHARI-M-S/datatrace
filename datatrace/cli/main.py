@@ -8,6 +8,7 @@ from rich.panel import Panel
 
 from datatrace.analysis.root_cause import first_significant_change
 from datatrace.recorder.store import EventStore
+from datatrace.trace.changed_fields import diff_fields
 from datatrace.trace.record_tracer import build_lineage
 
 app = typer.Typer(no_args_is_help=True, help="DataTrace — data forensics")
@@ -56,8 +57,28 @@ def explain(
         if before or after:
             lines.append(f"Before: {before}")
             lines.append(f"After: {after}")
+        for field, old, new in diff_fields(
+            finding.evidence.get("before", {}) if isinstance(finding.evidence.get("before"), dict) else {},
+            finding.evidence.get("after", {}) if isinstance(finding.evidence.get("after"), dict) else {},
+        ):
+            lines.append(f"  {field}: {old!r} → {new!r}")
 
     console.print(Panel("\n".join(lines), title=f"Record {record_id}"))
+
+
+@app.command()
+def stats(
+    store: Path = typer.Option(
+        Path("examples/sample_events.jsonl"),
+        help="JSONL event store path",
+    ),
+) -> None:
+    """Summarize events in a JSONL store."""
+    summary = EventStore(store).stats()
+    console.print(
+        f"Events: {summary['events']}  |  Records: {summary['records']}  |  "
+        f"Datasets: {summary['datasets']}",
+    )
 
 
 @app.command()

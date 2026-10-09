@@ -29,3 +29,25 @@ class EventStore:
                     events.append(event)
         events.sort(key=lambda e: e.timestamp)
         return events
+
+    def iter_events(self) -> list[TransformationEvent]:
+        if not self._path.is_file():
+            return []
+        events: list[TransformationEvent] = []
+        with self._path.open(encoding="utf-8") as fh:
+            for line in fh:
+                line = line.strip()
+                if not line:
+                    continue
+                events.append(TransformationEvent.model_validate_json(line))
+        return events
+
+    def stats(self) -> dict[str, int]:
+        events = self.iter_events()
+        record_ids = {e.record_id for e in events}
+        datasets = {e.dataset for e in events}
+        return {
+            "events": len(events),
+            "records": len(record_ids),
+            "datasets": len(datasets),
+        }
