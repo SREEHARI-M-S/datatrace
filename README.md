@@ -18,6 +18,8 @@ datatrace --help
 datatrace explain --record customer_id=183729
 datatrace explain --record customer_id=183729 --store examples/sample_events.jsonl
 datatrace stats
+datatrace validate
+datatrace records
 ```
 
 MIT License

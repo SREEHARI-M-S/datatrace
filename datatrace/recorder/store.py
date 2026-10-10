@@ -42,6 +42,9 @@ class EventStore:
                 events.append(TransformationEvent.model_validate_json(line))
         return events
 
+    def list_record_ids(self) -> list[str]:
+        return sorted({e.record_id for e in self.iter_events()})
+
     def stats(self) -> dict[str, int]:
         events = self.iter_events()
         record_ids = {e.record_id for e in events}

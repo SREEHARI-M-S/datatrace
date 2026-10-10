@@ -8,6 +8,7 @@ from rich.panel import Panel
 
 from datatrace.analysis.root_cause import first_significant_change
 from datatrace.recorder.store import EventStore
+from datatrace.recorder.validate import validate_event_store
 from datatrace.trace.changed_fields import diff_fields
 from datatrace.trace.record_tracer import build_lineage
 
@@ -64,6 +65,39 @@ def explain(
             lines.append(f"  {field}: {old!r} → {new!r}")
 
     console.print(Panel("\n".join(lines), title=f"Record {record_id}"))
+
+
+@app.command()
+def validate(
+    store: Path = typer.Option(
+        Path("examples/sample_events.jsonl"),
+        help="JSONL event store path",
+    ),
+) -> None:
+    """Validate each line in a JSONL event store."""
+    issues = validate_event_store(store)
+    if not issues:
+        console.print(f"[green]OK[/green] {store}")
+        raise typer.Exit(code=0)
+    for issue in issues:
+        console.print(f"[red]Line {issue.line}:[/red] {issue.message}")
+    raise typer.Exit(code=1)
+
+
+@app.command()
+def records(
+    store: Path = typer.Option(
+        Path("examples/sample_events.jsonl"),
+        help="JSONL event store path",
+    ),
+) -> None:
+    """List record IDs present in the event store."""
+    ids = EventStore(store).list_record_ids()
+    if not ids:
+        console.print("[yellow]No records found.[/yellow]")
+        raise typer.Exit(code=1)
+    for record_id in ids:
+        console.print(record_id)
 
 
 @app.command()
