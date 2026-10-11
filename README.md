@@ -21,6 +21,8 @@ datatrace stats
 datatrace validate
 datatrace records
 datatrace explain --record customer_id=183729 -o forensics.md
+datatrace datasets
+datatrace ingest --file event.json --store events.jsonl
 ```
 
 MIT License

@@ -9,12 +9,15 @@ from rich.panel import Panel
 from datatrace.analysis.root_cause import first_significant_change
 from datatrace.recorder.store import EventStore
 from datatrace.recorder.validate import validate_event_store
+from datatrace.cli.ingest import register_ingest_command
 from datatrace.report.markdown import explain_report_markdown
 from datatrace.trace.changed_fields import diff_fields
 from datatrace.trace.record_tracer import build_lineage
 
 app = typer.Typer(no_args_is_help=True, help="DataTrace — data forensics")
 console = Console()
+
+register_ingest_command(app)
 
 
 @app.command()
@@ -114,6 +117,22 @@ def records(
         raise typer.Exit(code=1)
     for record_id in ids:
         console.print(record_id)
+
+
+@app.command()
+def datasets(
+    store: Path = typer.Option(
+        Path("examples/sample_events.jsonl"),
+        help="JSONL event store path",
+    ),
+) -> None:
+    """List datasets referenced in the event store."""
+    names = sorted({e.dataset for e in EventStore(store).iter_events()})
+    if not names:
+        console.print("[yellow]No datasets found.[/yellow]")
+        raise typer.Exit(code=1)
+    for name in names:
+        console.print(name)
 
 
 @app.command()
