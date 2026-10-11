@@ -9,6 +9,7 @@ from rich.panel import Panel
 from datatrace.analysis.root_cause import first_significant_change
 from datatrace.recorder.store import EventStore
 from datatrace.recorder.validate import validate_event_store
+from datatrace.report.markdown import explain_report_markdown
 from datatrace.trace.changed_fields import diff_fields
 from datatrace.trace.record_tracer import build_lineage
 
@@ -22,6 +23,12 @@ def explain(
     store: Path = typer.Option(
         Path("examples/sample_events.jsonl"),
         help="JSONL event store path",
+    ),
+    output: Path | None = typer.Option(
+        None,
+        "-o",
+        "--output",
+        help="Write markdown report to this file",
     ),
 ) -> None:
     """Trace a record through recorded transformation events."""
@@ -64,7 +71,16 @@ def explain(
         ):
             lines.append(f"  {field}: {old!r} → {new!r}")
 
-    console.print(Panel("\n".join(lines), title=f"Record {record_id}"))
+    panel_text = "\n".join(lines)
+    if output:
+        md = explain_report_markdown(
+            record_id,
+            [dataset for dataset, _ in lineage],
+            finding,
+        )
+        output.write_text(md, encoding="utf-8")
+        console.print(f"[green]Wrote[/green] {output}")
+    console.print(Panel(panel_text, title=f"Record {record_id}"))
 
 
 @app.command()

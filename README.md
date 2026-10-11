@@ -20,6 +20,7 @@ datatrace explain --record customer_id=183729 --store examples/sample_events.jso
 datatrace stats
 datatrace validate
 datatrace records
+datatrace explain --record customer_id=183729 -o forensics.md
 ```
 
 MIT License
