@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import json
 from pathlib import Path
 
 import typer
@@ -141,9 +142,13 @@ def stats(
         Path("examples/sample_events.jsonl"),
         help="JSONL event store path",
     ),
+    json_out: bool = typer.Option(False, "--json", help="Print machine-readable summary"),
 ) -> None:
     """Summarize events in a JSONL store."""
     summary = EventStore(store).stats()
+    if json_out:
+        console.print(json.dumps(summary, indent=2))
+        return
     console.print(
         f"Events: {summary['events']}  |  Records: {summary['records']}  |  "
         f"Datasets: {summary['datasets']}",
