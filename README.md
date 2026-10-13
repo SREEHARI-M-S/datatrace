@@ -1,5 +1,10 @@
 # DataTrace
 
+[![version](https://img.shields.io/badge/version-0.1.6-blue)](https://github.com/SREEHARI-M-S/datatrace/commits/main)
+
+**Repository:** [github.com/SREEHARI-M-S/datatrace](https://github.com/SREEHARI-M-S/datatrace)  
+**Latest on `main`:** [commit history](https://github.com/SREEHARI-M-S/datatrace/commits/main)
+
 **Chrome DevTools for your data pipeline.**
 
 DataTrace answers: *why did this specific value become what it is?* using
