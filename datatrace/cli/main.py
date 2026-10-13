@@ -110,12 +110,16 @@ def records(
         Path("examples/sample_events.jsonl"),
         help="JSONL event store path",
     ),
+    json_out: bool = typer.Option(False, "--json", help="Print record IDs as JSON array"),
 ) -> None:
     """List record IDs present in the event store."""
     ids = EventStore(store).list_record_ids()
     if not ids:
         console.print("[yellow]No records found.[/yellow]")
         raise typer.Exit(code=1)
+    if json_out:
+        console.print(json.dumps(ids, indent=2))
+        return
     for record_id in ids:
         console.print(record_id)
 
