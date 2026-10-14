@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import json
 from pathlib import Path
 
 import typer
@@ -16,6 +17,7 @@ def register_timeline_command(app: typer.Typer) -> None:
     def timeline(
         record: str = typer.Option(..., "--record", help="Key=value"),
         store: Path = typer.Option(Path("examples/sample_events.jsonl"), help="JSONL store"),
+        json_out: bool = typer.Option(False, "--json", help="Print timeline as JSON"),
     ) -> None:
         """Chronological event table for one record."""
         if "=" not in record:
@@ -25,6 +27,16 @@ def register_timeline_command(app: typer.Typer) -> None:
         if not events:
             console.print("[yellow]No events found.[/yellow]")
             raise typer.Exit(code=1)
+
+        if json_out:
+            console.print(
+                json.dumps(
+                    [e.model_dump(mode="json") for e in events],
+                    indent=2,
+                    default=str,
+                ),
+            )
+            return
 
         table = Table(title=f"Timeline {record_id}")
         table.add_column("Time")
