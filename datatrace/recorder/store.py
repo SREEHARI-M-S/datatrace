@@ -42,6 +42,9 @@ class EventStore:
                 events.append(TransformationEvent.model_validate_json(line))
         return events
 
+    def events_for_dataset(self, dataset: str) -> list[TransformationEvent]:
+        return [e for e in self.iter_events() if e.dataset == dataset]
+
     def list_record_ids(self) -> list[str]:
         return sorted({e.record_id for e in self.iter_events()})
 

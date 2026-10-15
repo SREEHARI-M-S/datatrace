@@ -106,6 +106,24 @@ def explain(
 
 
 @app.command()
+def events(
+    dataset: str = typer.Option(..., "--dataset", help="Dataset name"),
+    store: Path = typer.Option(Path("examples/sample_events.jsonl"), help="JSONL store"),
+    json_out: bool = typer.Option(True, "--json/--text", help="JSON output (default)"),
+) -> None:
+    """List transformation events for a dataset."""
+    items = EventStore(store).events_for_dataset(dataset)
+    if not items:
+        console.print(f"[yellow]No events for dataset {dataset}[/yellow]")
+        raise typer.Exit(code=1)
+    if json_out:
+        console.print(json.dumps([e.model_dump(mode="json") for e in items], indent=2, default=str))
+    else:
+        for e in items:
+            console.print(f"{e.timestamp.isoformat()} {e.record_id} {e.operation}")
+
+
+@app.command()
 def column(
     record: str = typer.Option(..., "--record", help="Key=value"),
     name: str = typer.Option(..., "--column", help="Column name to trace"),
