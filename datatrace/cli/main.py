@@ -36,6 +36,7 @@ def explain(
         "--output",
         help="Write markdown report to this file",
     ),
+    json_out: bool = typer.Option(False, "--json", help="Print structured JSON (no panel)"),
 ) -> None:
     """Trace a record through recorded transformation events."""
     if "=" not in record:
@@ -76,6 +77,20 @@ def explain(
             finding.evidence.get("after", {}) if isinstance(finding.evidence.get("after"), dict) else {},
         ):
             lines.append(f"  {field}: {old!r} → {new!r}")
+
+    if json_out:
+        payload: dict[str, object] = {
+            "record_id": record_id,
+            "lineage": [{"dataset": d, "state": s} for d, s in lineage],
+        }
+        if finding:
+            payload["root_cause"] = {
+                "summary": finding.summary,
+                "transformation": finding.transformation,
+                "evidence": finding.evidence,
+            }
+        console.print(json.dumps(payload, indent=2, default=str))
+        raise typer.Exit(code=0)
 
     panel_text = "\n".join(lines)
     if output:
@@ -132,12 +147,16 @@ def datasets(
         Path("examples/sample_events.jsonl"),
         help="JSONL event store path",
     ),
+    json_out: bool = typer.Option(False, "--json", help="Print datasets as JSON array"),
 ) -> None:
     """List datasets referenced in the event store."""
     names = sorted({e.dataset for e in EventStore(store).iter_events()})
     if not names:
         console.print("[yellow]No datasets found.[/yellow]")
         raise typer.Exit(code=1)
+    if json_out:
+        console.print(json.dumps(names, indent=2))
+        return
     for name in names:
         console.print(name)
 
