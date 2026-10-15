@@ -14,6 +14,7 @@ from datatrace.cli.ingest import register_ingest_command
 from datatrace.cli.timeline import register_timeline_command
 from datatrace.report.markdown import explain_report_markdown
 from datatrace.trace.changed_fields import diff_fields
+from datatrace.trace.column_trace import trace_column
 from datatrace.trace.record_tracer import build_lineage
 
 app = typer.Typer(no_args_is_help=True, help="DataTrace — data forensics")
@@ -102,6 +103,29 @@ def explain(
         output.write_text(md, encoding="utf-8")
         console.print(f"[green]Wrote[/green] {output}")
     console.print(Panel(panel_text, title=f"Record {record_id}"))
+
+
+@app.command()
+def column(
+    record: str = typer.Option(..., "--record", help="Key=value"),
+    name: str = typer.Option(..., "--column", help="Column name to trace"),
+    store: Path = typer.Option(Path("examples/sample_events.jsonl"), help="JSONL store"),
+    json_out: bool = typer.Option(True, "--json/--text", help="JSON output (default)"),
+) -> None:
+    """Trace how one column value changes across events for a record."""
+    if "=" not in record:
+        raise typer.BadParameter("Use --record key=value")
+    record_id = record.split("=", 1)[1]
+    events = EventStore(store).load_for_record(record_id)
+    trail = trace_column(events, name)
+    if not trail:
+        console.print("[yellow]No column history found.[/yellow]")
+        raise typer.Exit(code=1)
+    if json_out:
+        console.print(json.dumps(trail, indent=2))
+    else:
+        for step in trail:
+            console.print(f"{step['dataset']}: {step['value']!r}")
 
 
 @app.command()
