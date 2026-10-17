@@ -27,3 +27,5 @@ def register_store_diff_command(app: typer.Typer) -> None:
         console.print(f"Only in A: {len(summary.only_in_a)}")
         console.print(f"Only in B: {len(summary.only_in_b)}")
         console.print(f"In both: {len(summary.in_both)}")
+        console.print(f"Dataset counts A: {summary.dataset_counts_a}")
+        console.print(f"Dataset counts B: {summary.dataset_counts_b}")

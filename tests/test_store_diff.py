@@ -36,3 +36,14 @@ def test_diff_stores_cli(tmp_path: Path) -> None:
     result = runner.invoke(app, ["diff-stores", str(a), str(b), "--json"])
     assert result.exit_code == 0
     assert "only_in_a" in result.stdout
+    assert "dataset_counts_a" in result.stdout
+
+
+def test_dataset_counts_in_summary(tmp_path: Path) -> None:
+    a = tmp_path / "a.jsonl"
+    a.write_text(Path("examples/sample_events.jsonl").read_text(encoding="utf-8"), encoding="utf-8")
+    from datatrace.diff.store_diff import diff_record_ids
+    from datatrace.recorder.store import EventStore
+
+    summary = diff_record_ids(EventStore(a), EventStore(a))
+    assert summary.dataset_counts_a.get("identity_mapping") == 1

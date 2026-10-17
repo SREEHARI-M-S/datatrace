@@ -154,9 +154,21 @@ def validate(
         Path("examples/sample_events.jsonl"),
         help="JSONL event store path",
     ),
+    json_out: bool = typer.Option(False, "--json", help="Print validation result as JSON"),
 ) -> None:
     """Validate each line in a JSONL event store."""
     issues = validate_event_store(store)
+    if json_out:
+        console.print(
+            json.dumps(
+                {
+                    "ok": not issues,
+                    "issues": [{"line": i.line, "message": i.message} for i in issues],
+                },
+                indent=2,
+            ),
+        )
+        raise typer.Exit(code=0 if not issues else 1)
     if not issues:
         console.print(f"[green]OK[/green] {store}")
         raise typer.Exit(code=0)
