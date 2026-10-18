@@ -24,13 +24,44 @@ def register_ingest_command(app: typer.Typer) -> None:
             "--file",
             help="JSON file containing one event object",
         ),
+        merge_jsonl: Path | None = typer.Option(
+            None,
+            "--merge",
+            help="Append all events from another JSONL file",
+        ),
+        dedupe: bool = typer.Option(
+            False,
+            "--dedupe",
+            help="When merging, skip lines identical to an existing store line",
+        ),
     ) -> None:
-        """Append a transformation event to a JSONL store."""
+        """Append transformation event(s) to a JSONL store."""
+        target = EventStore(store)
+        if merge_jsonl is not None:
+            existing = target.existing_raw_lines() if dedupe else set()
+            count = 0
+            skipped = 0
+            for line in merge_jsonl.read_text(encoding="utf-8").splitlines():
+                line = line.strip()
+                if not line:
+                    continue
+                if dedupe and line in existing:
+                    skipped += 1
+                    continue
+                target.append(TransformationEvent.model_validate_json(line))
+                if dedupe:
+                    existing.add(line)
+                count += 1
+            msg = f"[green]Merged[/green] {count} events into {store}"
+            if dedupe and skipped:
+                msg += f" ({skipped} duplicate lines skipped)"
+            console.print(msg)
+            raise typer.Exit(code=0)
         if event_json is None:
-            console.print("Provide --file with a JSON event payload.")
+            console.print("Provide --file or --merge.")
             raise typer.Exit(code=1)
 
         payload = json.loads(event_json.read_text(encoding="utf-8"))
         event = TransformationEvent.model_validate(payload)
-        EventStore(store).append(event)
+        target.append(event)
         console.print(f"[green]Appended[/green] record {event.record_id} → {event.dataset}")

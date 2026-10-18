@@ -11,6 +11,7 @@ from datatrace.analysis.root_cause import first_significant_change
 from datatrace.recorder.store import EventStore
 from datatrace.recorder.validate import validate_event_store
 from datatrace.cli.ingest import register_ingest_command
+from datatrace.cli.record_diff_cmd import register_record_diff_command
 from datatrace.cli.store_diff_cmd import register_store_diff_command
 from datatrace.cli.timeline import register_timeline_command
 from datatrace.report.markdown import explain_report_markdown
@@ -23,6 +24,7 @@ console = Console()
 
 register_ingest_command(app)
 register_store_diff_command(app)
+register_record_diff_command(app)
 register_timeline_command(app)
 
 

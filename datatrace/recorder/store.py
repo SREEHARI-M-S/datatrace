@@ -57,3 +57,8 @@ class EventStore:
             "records": len(record_ids),
             "datasets": len(datasets),
         }
+
+    def existing_raw_lines(self) -> set[str]:
+        if not self._path.is_file():
+            return set()
+        return {line.strip() for line in self._path.read_text(encoding="utf-8").splitlines() if line.strip()}
