@@ -14,6 +14,7 @@ from datatrace.cli.ingest import register_ingest_command
 from datatrace.cli.record_diff_cmd import register_record_diff_command
 from datatrace.cli.store_diff_cmd import register_store_diff_command
 from datatrace.cli.timeline import register_timeline_command
+from datatrace.cli.search_cmd import register_search_command
 from datatrace.report.markdown import explain_report_markdown
 from datatrace.trace.changed_fields import diff_fields
 from datatrace.trace.column_trace import trace_column
@@ -26,6 +27,7 @@ register_ingest_command(app)
 register_store_diff_command(app)
 register_record_diff_command(app)
 register_timeline_command(app)
+register_search_command(app)
 
 
 @app.command()
@@ -226,9 +228,13 @@ def stats(
         help="JSONL event store path",
     ),
     json_out: bool = typer.Option(False, "--json", help="Print machine-readable summary"),
+    by_dataset: bool = typer.Option(False, "--by-dataset", help="Include per-dataset event counts"),
 ) -> None:
     """Summarize events in a JSONL store."""
-    summary = EventStore(store).stats()
+    event_store = EventStore(store)
+    summary = event_store.stats()
+    if by_dataset:
+        summary = {**summary, "events_per_dataset": event_store.events_per_dataset()}
     if json_out:
         console.print(json.dumps(summary, indent=2))
         return
@@ -236,6 +242,9 @@ def stats(
         f"Events: {summary['events']}  |  Records: {summary['records']}  |  "
         f"Datasets: {summary['datasets']}",
     )
+    if by_dataset and "events_per_dataset" in summary:
+        for name, count in summary["events_per_dataset"].items():
+            console.print(f"  {name}: {count}")
 
 
 @app.command()

@@ -58,6 +58,12 @@ class EventStore:
             "datasets": len(datasets),
         }
 
+    def events_per_dataset(self) -> dict[str, int]:
+        counts: dict[str, int] = {}
+        for event in self.iter_events():
+            counts[event.dataset] = counts.get(event.dataset, 0) + 1
+        return dict(sorted(counts.items()))
+
     def existing_raw_lines(self) -> set[str]:
         if not self._path.is_file():
             return set()
