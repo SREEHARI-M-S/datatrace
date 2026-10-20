@@ -8,6 +8,7 @@ from rich.console import Console
 from rich.table import Table
 
 from datatrace.recorder.store import EventStore
+from datatrace.report.timeline_markdown import timeline_report_markdown
 
 console = Console()
 
@@ -18,6 +19,12 @@ def register_timeline_command(app: typer.Typer) -> None:
         record: str = typer.Option(..., "--record", help="Key=value"),
         store: Path = typer.Option(Path("examples/sample_events.jsonl"), help="JSONL store"),
         json_out: bool = typer.Option(False, "--json", help="Print timeline as JSON"),
+        output: Path | None = typer.Option(
+            None,
+            "-o",
+            "--output",
+            help="Write markdown timeline to this file",
+        ),
     ) -> None:
         """Chronological event table for one record."""
         if "=" not in record:
@@ -28,6 +35,10 @@ def register_timeline_command(app: typer.Typer) -> None:
             console.print("[yellow]No events found.[/yellow]")
             raise typer.Exit(code=1)
 
+        if output is not None:
+            output.write_text(timeline_report_markdown(record_id, events), encoding="utf-8")
+            console.print(f"[green]Wrote[/green] {output}")
+
         if json_out:
             console.print(
                 json.dumps(
@@ -36,6 +47,9 @@ def register_timeline_command(app: typer.Typer) -> None:
                     default=str,
                 ),
             )
+            return
+
+        if output is not None:
             return
 
         table = Table(title=f"Timeline {record_id}")
