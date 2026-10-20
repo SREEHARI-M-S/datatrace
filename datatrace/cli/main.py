@@ -18,6 +18,7 @@ from datatrace.cli.timeline import register_timeline_command
 from datatrace.cli.search_cmd import register_search_command
 from datatrace.cli.filter_cmd import register_filter_command
 from datatrace.cli.export_record_cmd import register_export_record_command
+from datatrace.cli.audit_cmd import register_audit_command
 from datatrace.report.markdown import explain_report_markdown
 from datatrace.trace.changed_fields import diff_fields
 from datatrace.trace.column_trace import trace_column
@@ -33,6 +34,7 @@ register_timeline_command(app)
 register_search_command(app)
 register_filter_command(app)
 register_export_record_command(app)
+register_audit_command(app)
 
 
 @app.command()
