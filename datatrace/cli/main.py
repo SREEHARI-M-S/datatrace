@@ -9,6 +9,7 @@ from rich.panel import Panel
 
 from datatrace.analysis.root_cause import first_significant_change
 from datatrace.recorder.store import EventStore
+from datatrace.recorder.chronology import validate_chronology
 from datatrace.recorder.validate import validate_event_store
 from datatrace.cli.ingest import register_ingest_command
 from datatrace.cli.record_diff_cmd import register_record_diff_command
@@ -16,6 +17,7 @@ from datatrace.cli.store_diff_cmd import register_store_diff_command
 from datatrace.cli.timeline import register_timeline_command
 from datatrace.cli.search_cmd import register_search_command
 from datatrace.cli.filter_cmd import register_filter_command
+from datatrace.cli.export_record_cmd import register_export_record_command
 from datatrace.report.markdown import explain_report_markdown
 from datatrace.trace.changed_fields import diff_fields
 from datatrace.trace.column_trace import trace_column
@@ -30,6 +32,7 @@ register_record_diff_command(app)
 register_timeline_command(app)
 register_search_command(app)
 register_filter_command(app)
+register_export_record_command(app)
 
 
 @app.command()
@@ -161,25 +164,37 @@ def validate(
         help="JSONL event store path",
     ),
     json_out: bool = typer.Option(False, "--json", help="Print validation result as JSON"),
+    chronology: bool = typer.Option(
+        False,
+        "--chronology",
+        help="Also require non-decreasing timestamps per record",
+    ),
 ) -> None:
     """Validate each line in a JSONL event store."""
     issues = validate_event_store(store)
+    chrono_issues = validate_chronology(store) if chronology else []
+    ok = not issues and not chrono_issues
     if json_out:
         console.print(
             json.dumps(
                 {
-                    "ok": not issues,
+                    "ok": ok,
                     "issues": [{"line": i.line, "message": i.message} for i in issues],
+                    "chronology": [
+                        {"record_id": c.record_id, "message": c.message} for c in chrono_issues
+                    ],
                 },
                 indent=2,
             ),
         )
-        raise typer.Exit(code=0 if not issues else 1)
-    if not issues:
+        raise typer.Exit(code=0 if ok else 1)
+    if ok:
         console.print(f"[green]OK[/green] {store}")
         raise typer.Exit(code=0)
     for issue in issues:
         console.print(f"[red]Line {issue.line}:[/red] {issue.message}")
+    for issue in chrono_issues:
+        console.print(f"[red]Record {issue.record_id}:[/red] {issue.message}")
     raise typer.Exit(code=1)
 
 
