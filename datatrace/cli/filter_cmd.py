@@ -14,12 +14,19 @@ def register_filter_command(app: typer.Typer) -> None:
     @app.command("filter")
     def filter_events(
         dataset: str = typer.Option(..., "--dataset", help="Dataset name to keep"),
+        operation: str | None = typer.Option(
+            None,
+            "--operation",
+            help="Further restrict to this operation (e.g. UPDATE)",
+        ),
         store: Path = typer.Option(Path("examples/sample_events.jsonl"), help="Source JSONL store"),
         output: Path = typer.Option(..., "-o", "--output", help="Destination JSONL file"),
     ) -> None:
         """Write events for one dataset to a new JSONL file."""
         source = EventStore(store)
         matches = source.events_for_dataset(dataset)
+        if operation is not None:
+            matches = [event for event in matches if event.operation == operation]
         if not matches:
             console.print(f"[yellow]No events for dataset {dataset}[/yellow]")
             raise typer.Exit(code=1)

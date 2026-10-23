@@ -73,6 +73,9 @@ class EventStore:
             counts[event.operation] = counts.get(event.operation, 0) + 1
         return dict(sorted(counts.items()))
 
+    def list_operations(self) -> list[str]:
+        return sorted({e.operation for e in self.iter_events()})
+
     def existing_raw_lines(self) -> set[str]:
         if not self._path.is_file():
             return set()

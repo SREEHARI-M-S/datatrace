@@ -226,6 +226,26 @@ def records(
 
 
 @app.command()
+def operations(
+    store: Path = typer.Option(
+        Path("examples/sample_events.jsonl"),
+        help="JSONL event store path",
+    ),
+    json_out: bool = typer.Option(False, "--json", help="Print operations as JSON array"),
+) -> None:
+    """List transformation operations present in the event store."""
+    names = EventStore(store).list_operations()
+    if not names:
+        console.print("[yellow]No operations found.[/yellow]")
+        raise typer.Exit(code=1)
+    if json_out:
+        console.print(json.dumps(names, indent=2))
+        return
+    for name in names:
+        console.print(name)
+
+
+@app.command()
 def datasets(
     store: Path = typer.Option(
         Path("examples/sample_events.jsonl"),

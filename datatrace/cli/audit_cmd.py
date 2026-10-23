@@ -23,6 +23,12 @@ def register_audit_command(app: typer.Typer) -> None:
             "--only-changed",
             help="List only records with a detected root cause",
         ),
+        output: Path | None = typer.Option(
+            None,
+            "-o",
+            "--output",
+            help="Write audit JSON to this file",
+        ),
     ) -> None:
         """Scan the store and report per-record event counts and root-cause hints."""
         rows = audit_records(EventStore(store))
@@ -32,24 +38,30 @@ def register_audit_command(app: typer.Typer) -> None:
             console.print("[yellow]No records to audit.[/yellow]")
             raise typer.Exit(code=1)
 
+        payload = [
+            {
+                "record_id": row.record_id,
+                "event_count": row.event_count,
+                "root_cause": (
+                    {
+                        "summary": row.root_cause.summary,
+                        "transformation": row.root_cause.transformation,
+                        "evidence": row.root_cause.evidence,
+                    }
+                    if row.root_cause
+                    else None
+                ),
+            }
+            for row in rows
+        ]
+        if output is not None:
+            output.parent.mkdir(parents=True, exist_ok=True)
+            output.write_text(json.dumps(payload, indent=2, default=str), encoding="utf-8")
+            console.print(f"[green]Wrote[/green] {output}")
         if json_out:
-            payload = [
-                {
-                    "record_id": row.record_id,
-                    "event_count": row.event_count,
-                    "root_cause": (
-                        {
-                            "summary": row.root_cause.summary,
-                            "transformation": row.root_cause.transformation,
-                            "evidence": row.root_cause.evidence,
-                        }
-                        if row.root_cause
-                        else None
-                    ),
-                }
-                for row in rows
-            ]
             console.print(json.dumps(payload, indent=2, default=str))
+            return
+        if output is not None:
             return
 
         table = Table(title="Record audit")
