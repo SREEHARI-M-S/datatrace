@@ -206,10 +206,15 @@ def records(
         Path("examples/sample_events.jsonl"),
         help="JSONL event store path",
     ),
+    dataset: str | None = typer.Option(
+        None,
+        "--dataset",
+        help="Only list records that appear in this dataset",
+    ),
     json_out: bool = typer.Option(False, "--json", help="Print record IDs as JSON array"),
 ) -> None:
     """List record IDs present in the event store."""
-    ids = EventStore(store).list_record_ids()
+    ids = EventStore(store).list_record_ids(dataset=dataset)
     if not ids:
         console.print("[yellow]No records found.[/yellow]")
         raise typer.Exit(code=1)
@@ -248,12 +253,15 @@ def stats(
     ),
     json_out: bool = typer.Option(False, "--json", help="Print machine-readable summary"),
     by_dataset: bool = typer.Option(False, "--by-dataset", help="Include per-dataset event counts"),
+    by_operation: bool = typer.Option(False, "--by-operation", help="Include per-operation event counts"),
 ) -> None:
     """Summarize events in a JSONL store."""
     event_store = EventStore(store)
     summary = event_store.stats()
     if by_dataset:
         summary = {**summary, "events_per_dataset": event_store.events_per_dataset()}
+    if by_operation:
+        summary = {**summary, "events_per_operation": event_store.events_per_operation()}
     if json_out:
         console.print(json.dumps(summary, indent=2))
         return
@@ -263,6 +271,9 @@ def stats(
     )
     if by_dataset and "events_per_dataset" in summary:
         for name, count in summary["events_per_dataset"].items():
+            console.print(f"  {name}: {count}")
+    if by_operation and "events_per_operation" in summary:
+        for name, count in summary["events_per_operation"].items():
             console.print(f"  {name}: {count}")
 
 

@@ -45,8 +45,11 @@ class EventStore:
     def events_for_dataset(self, dataset: str) -> list[TransformationEvent]:
         return [e for e in self.iter_events() if e.dataset == dataset]
 
-    def list_record_ids(self) -> list[str]:
-        return sorted({e.record_id for e in self.iter_events()})
+    def list_record_ids(self, dataset: str | None = None) -> list[str]:
+        events = self.iter_events()
+        if dataset is not None:
+            events = [e for e in events if e.dataset == dataset]
+        return sorted({e.record_id for e in events})
 
     def stats(self) -> dict[str, int]:
         events = self.iter_events()
@@ -62,6 +65,12 @@ class EventStore:
         counts: dict[str, int] = {}
         for event in self.iter_events():
             counts[event.dataset] = counts.get(event.dataset, 0) + 1
+        return dict(sorted(counts.items()))
+
+    def events_per_operation(self) -> dict[str, int]:
+        counts: dict[str, int] = {}
+        for event in self.iter_events():
+            counts[event.operation] = counts.get(event.operation, 0) + 1
         return dict(sorted(counts.items()))
 
     def existing_raw_lines(self) -> set[str]:
