@@ -121,11 +121,17 @@ def explain(
 @app.command()
 def events(
     dataset: str = typer.Option(..., "--dataset", help="Dataset name"),
+    operation: str | None = typer.Option(None, "--operation", help="Filter by operation"),
+    record_id: str | None = typer.Option(None, "--record-id", help="Filter by record id"),
     store: Path = typer.Option(Path("examples/sample_events.jsonl"), help="JSONL store"),
     json_out: bool = typer.Option(True, "--json/--text", help="JSON output (default)"),
 ) -> None:
     """List transformation events for a dataset."""
-    items = EventStore(store).events_for_dataset(dataset)
+    items = EventStore(store).query_events(
+        dataset=dataset,
+        operation=operation,
+        record_id=record_id,
+    )
     if not items:
         console.print(f"[yellow]No events for dataset {dataset}[/yellow]")
         raise typer.Exit(code=1)

@@ -45,6 +45,22 @@ class EventStore:
     def events_for_dataset(self, dataset: str) -> list[TransformationEvent]:
         return [e for e in self.iter_events() if e.dataset == dataset]
 
+    def query_events(
+        self,
+        *,
+        dataset: str | None = None,
+        operation: str | None = None,
+        record_id: str | None = None,
+    ) -> list[TransformationEvent]:
+        events = self.iter_events()
+        if dataset is not None:
+            events = [e for e in events if e.dataset == dataset]
+        if operation is not None:
+            events = [e for e in events if e.operation == operation]
+        if record_id is not None:
+            events = [e for e in events if e.record_id == record_id]
+        return events
+
     def list_record_ids(self, dataset: str | None = None) -> list[str]:
         events = self.iter_events()
         if dataset is not None:

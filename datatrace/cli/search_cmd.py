@@ -16,13 +16,15 @@ def register_search_command(app: typer.Typer) -> None:
     def search(
         query: str = typer.Argument(..., help="Substring to match in dataset, operation, or transformation"),
         store: Path = typer.Option(Path("examples/sample_events.jsonl"), help="JSONL store"),
+        record_id: str | None = typer.Option(None, "--record-id", help="Only search within this record"),
         json_out: bool = typer.Option(True, "--json/--text", help="JSON output (default)"),
     ) -> None:
         """Find events whose dataset, operation, or transformation contains the query."""
         needle = query.lower()
+        source = EventStore(store).query_events(record_id=record_id) if record_id else EventStore(store).iter_events()
         hits = [
             event
-            for event in EventStore(store).iter_events()
+            for event in source
             if needle in event.dataset.lower()
             or needle in event.operation.lower()
             or needle in event.transformation.lower()
