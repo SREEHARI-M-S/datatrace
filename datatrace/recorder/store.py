@@ -92,6 +92,9 @@ class EventStore:
     def list_operations(self) -> list[str]:
         return sorted({e.operation for e in self.iter_events()})
 
+    def list_transformations(self) -> list[str]:
+        return sorted({e.transformation for e in self.iter_events()})
+
     def existing_raw_lines(self) -> set[str]:
         if not self._path.is_file():
             return set()

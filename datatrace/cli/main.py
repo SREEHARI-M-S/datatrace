@@ -252,6 +252,26 @@ def operations(
 
 
 @app.command()
+def transformations(
+    store: Path = typer.Option(
+        Path("examples/sample_events.jsonl"),
+        help="JSONL event store path",
+    ),
+    json_out: bool = typer.Option(False, "--json", help="Print transformations as JSON array"),
+) -> None:
+    """List SQL transformation names referenced in the event store."""
+    names = EventStore(store).list_transformations()
+    if not names:
+        console.print("[yellow]No transformations found.[/yellow]")
+        raise typer.Exit(code=1)
+    if json_out:
+        console.print(json.dumps(names, indent=2))
+        return
+    for name in names:
+        console.print(name)
+
+
+@app.command()
 def datasets(
     store: Path = typer.Option(
         Path("examples/sample_events.jsonl"),
