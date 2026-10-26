@@ -95,6 +95,12 @@ class EventStore:
     def list_transformations(self) -> list[str]:
         return sorted({e.transformation for e in self.iter_events()})
 
+    def events_per_transformation(self) -> dict[str, int]:
+        counts: dict[str, int] = {}
+        for event in self.iter_events():
+            counts[event.transformation] = counts.get(event.transformation, 0) + 1
+        return dict(sorted(counts.items()))
+
     def existing_raw_lines(self) -> set[str]:
         if not self._path.is_file():
             return set()

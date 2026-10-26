@@ -300,6 +300,11 @@ def stats(
     json_out: bool = typer.Option(False, "--json", help="Print machine-readable summary"),
     by_dataset: bool = typer.Option(False, "--by-dataset", help="Include per-dataset event counts"),
     by_operation: bool = typer.Option(False, "--by-operation", help="Include per-operation event counts"),
+    by_transformation: bool = typer.Option(
+        False,
+        "--by-transformation",
+        help="Include per-transformation SQL file event counts",
+    ),
 ) -> None:
     """Summarize events in a JSONL store."""
     event_store = EventStore(store)
@@ -308,6 +313,8 @@ def stats(
         summary = {**summary, "events_per_dataset": event_store.events_per_dataset()}
     if by_operation:
         summary = {**summary, "events_per_operation": event_store.events_per_operation()}
+    if by_transformation:
+        summary = {**summary, "events_per_transformation": event_store.events_per_transformation()}
     if json_out:
         console.print(json.dumps(summary, indent=2))
         return
@@ -320,6 +327,9 @@ def stats(
             console.print(f"  {name}: {count}")
     if by_operation and "events_per_operation" in summary:
         for name, count in summary["events_per_operation"].items():
+            console.print(f"  {name}: {count}")
+    if by_transformation and "events_per_transformation" in summary:
+        for name, count in summary["events_per_transformation"].items():
             console.print(f"  {name}: {count}")
 
 

@@ -34,6 +34,7 @@ def register_ingest_command(app: typer.Typer) -> None:
             "--dedupe",
             help="When merging, skip lines identical to an existing store line",
         ),
+        json_out: bool = typer.Option(False, "--json", help="Print merge summary as JSON"),
     ) -> None:
         """Append transformation event(s) to a JSONL store."""
         target = EventStore(store)
@@ -52,10 +53,22 @@ def register_ingest_command(app: typer.Typer) -> None:
                 if dedupe:
                     existing.add(line)
                 count += 1
-            msg = f"[green]Merged[/green] {count} events into {store}"
-            if dedupe and skipped:
-                msg += f" ({skipped} duplicate lines skipped)"
-            console.print(msg)
+            if json_out:
+                console.print(
+                    json.dumps(
+                        {
+                            "store": str(store),
+                            "merged": count,
+                            "skipped_duplicates": skipped if dedupe else 0,
+                        },
+                        indent=2,
+                    ),
+                )
+            else:
+                msg = f"[green]Merged[/green] {count} events into {store}"
+                if dedupe and skipped:
+                    msg += f" ({skipped} duplicate lines skipped)"
+                console.print(msg)
             raise typer.Exit(code=0)
         if event_json is None:
             console.print("Provide --file or --merge.")

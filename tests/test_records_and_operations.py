@@ -15,6 +15,16 @@ def test_list_record_ids_filtered_by_dataset() -> None:
     assert store.list_record_ids(dataset="missing") == []
 
 
+def test_stats_by_transformation_cli() -> None:
+    result = runner.invoke(
+        app,
+        ["stats", "--store", "examples/sample_events.jsonl", "--json", "--by-transformation"],
+    )
+    assert result.exit_code == 0
+    payload = json.loads(result.stdout)
+    assert payload["events_per_transformation"]["identity_mapping.sql"] == 1
+
+
 def test_stats_by_operation_cli() -> None:
     result = runner.invoke(
         app,
