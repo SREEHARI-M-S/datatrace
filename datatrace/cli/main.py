@@ -148,6 +148,7 @@ def column(
     name: str = typer.Option(..., "--column", help="Column name to trace"),
     store: Path = typer.Option(Path("examples/sample_events.jsonl"), help="JSONL store"),
     json_out: bool = typer.Option(True, "--json/--text", help="JSON output (default)"),
+    output: Path | None = typer.Option(None, "-o", "--output", help="Write column trail JSON to file"),
 ) -> None:
     """Trace how one column value changes across events for a record."""
     if "=" not in record:
@@ -158,11 +159,17 @@ def column(
     if not trail:
         console.print("[yellow]No column history found.[/yellow]")
         raise typer.Exit(code=1)
+    if output is not None:
+        output.parent.mkdir(parents=True, exist_ok=True)
+        output.write_text(json.dumps(trail, indent=2), encoding="utf-8")
+        console.print(f"[green]Wrote[/green] {output}")
     if json_out:
         console.print(json.dumps(trail, indent=2))
-    else:
-        for step in trail:
-            console.print(f"{step['dataset']}: {step['value']!r}")
+        return
+    if output is not None:
+        return
+    for step in trail:
+        console.print(f"{step['dataset']}: {step['value']!r}")
 
 
 @app.command()
@@ -177,24 +184,26 @@ def validate(
         "--chronology",
         help="Also require non-decreasing timestamps per record",
     ),
+    output: Path | None = typer.Option(None, "-o", "--output", help="Write validation JSON to file"),
 ) -> None:
     """Validate each line in a JSONL event store."""
     issues = validate_event_store(store)
     chrono_issues = validate_chronology(store) if chronology else []
     ok = not issues and not chrono_issues
+    document = {
+        "ok": ok,
+        "store": str(store),
+        "issues": [{"line": i.line, "message": i.message} for i in issues],
+        "chronology": [{"record_id": c.record_id, "message": c.message} for c in chrono_issues],
+    }
+    if output is not None:
+        output.parent.mkdir(parents=True, exist_ok=True)
+        output.write_text(json.dumps(document, indent=2), encoding="utf-8")
+        console.print(f"[green]Wrote[/green] {output}")
     if json_out:
-        console.print(
-            json.dumps(
-                {
-                    "ok": ok,
-                    "issues": [{"line": i.line, "message": i.message} for i in issues],
-                    "chronology": [
-                        {"record_id": c.record_id, "message": c.message} for c in chrono_issues
-                    ],
-                },
-                indent=2,
-            ),
-        )
+        console.print(json.dumps(document, indent=2))
+        raise typer.Exit(code=0 if ok else 1)
+    if output is not None:
         raise typer.Exit(code=0 if ok else 1)
     if ok:
         console.print(f"[green]OK[/green] {store}")
