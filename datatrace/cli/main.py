@@ -103,7 +103,13 @@ def explain(
                 "transformation": finding.transformation,
                 "evidence": finding.evidence,
             }
-        console.print(json.dumps(payload, indent=2, default=str))
+        text = json.dumps(payload, indent=2, default=str)
+        if output is not None:
+            output.parent.mkdir(parents=True, exist_ok=True)
+            output.write_text(text, encoding="utf-8")
+            console.print(f"[green]Wrote[/green] {output}")
+        else:
+            console.print(text)
         raise typer.Exit(code=0)
 
     panel_text = "\n".join(lines)
