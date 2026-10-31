@@ -19,14 +19,17 @@ def register_filter_command(app: typer.Typer) -> None:
             "--operation",
             help="Further restrict to this operation (e.g. UPDATE)",
         ),
+        record_id: str | None = typer.Option(
+            None,
+            "--record-id",
+            help="Further restrict to this record id",
+        ),
         store: Path = typer.Option(Path("examples/sample_events.jsonl"), help="Source JSONL store"),
         output: Path = typer.Option(..., "-o", "--output", help="Destination JSONL file"),
     ) -> None:
         """Write events for one dataset to a new JSONL file."""
         source = EventStore(store)
-        matches = source.events_for_dataset(dataset)
-        if operation is not None:
-            matches = [event for event in matches if event.operation == operation]
+        matches = source.query_events(dataset=dataset, operation=operation, record_id=record_id)
         if not matches:
             console.print(f"[yellow]No events for dataset {dataset}[/yellow]")
             raise typer.Exit(code=1)

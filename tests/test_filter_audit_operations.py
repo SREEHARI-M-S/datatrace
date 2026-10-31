@@ -31,6 +31,26 @@ def test_filter_by_operation(tmp_path: Path) -> None:
     assert '"operation":"UPDATE"' in lines[0]
 
 
+def test_filter_by_record_id(tmp_path: Path) -> None:
+    out = tmp_path / "one.jsonl"
+    result = runner.invoke(
+        app,
+        [
+            "filter",
+            "--dataset",
+            "raw_customer",
+            "--record-id",
+            "183729",
+            "--store",
+            "examples/sample_events.jsonl",
+            "-o",
+            str(out),
+        ],
+    )
+    assert result.exit_code == 0
+    assert len(out.read_text(encoding="utf-8").strip().splitlines()) == 1
+
+
 def test_operations_cli() -> None:
     result = runner.invoke(app, ["operations", "--store", "examples/sample_events.jsonl", "--json"])
     assert result.exit_code == 0
