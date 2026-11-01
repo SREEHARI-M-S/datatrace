@@ -131,6 +131,7 @@ def events(
     record_id: str | None = typer.Option(None, "--record-id", help="Filter by record id"),
     store: Path = typer.Option(Path("examples/sample_events.jsonl"), help="JSONL store"),
     json_out: bool = typer.Option(True, "--json/--text", help="JSON output (default)"),
+    output: Path | None = typer.Option(None, "-o", "--output", help="Write events JSON to file"),
 ) -> None:
     """List transformation events for a dataset."""
     items = EventStore(store).query_events(
@@ -141,11 +142,19 @@ def events(
     if not items:
         console.print(f"[yellow]No events for dataset {dataset}[/yellow]")
         raise typer.Exit(code=1)
+    payload = [e.model_dump(mode="json") for e in items]
+    text = json.dumps(payload, indent=2, default=str)
+    if output is not None:
+        output.parent.mkdir(parents=True, exist_ok=True)
+        output.write_text(text, encoding="utf-8")
+        console.print(f"[green]Wrote[/green] {output}")
     if json_out:
-        console.print(json.dumps([e.model_dump(mode="json") for e in items], indent=2, default=str))
-    else:
-        for e in items:
-            console.print(f"{e.timestamp.isoformat()} {e.record_id} {e.operation}")
+        console.print(text)
+        return
+    if output is not None:
+        return
+    for e in items:
+        console.print(f"{e.timestamp.isoformat()} {e.record_id} {e.operation}")
 
 
 @app.command()

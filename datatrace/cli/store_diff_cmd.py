@@ -18,11 +18,19 @@ def register_store_diff_command(app: typer.Typer) -> None:
         store_a: Path = typer.Argument(..., help="First JSONL store"),
         store_b: Path = typer.Argument(..., help="Second JSONL store"),
         json_out: bool = typer.Option(False, "--json", help="Print JSON summary"),
+        output: Path | None = typer.Option(None, "-o", "--output", help="Write diff summary JSON"),
     ) -> None:
         """Compare record IDs present in two event stores."""
         summary = diff_record_ids(EventStore(store_a), EventStore(store_b))
+        text = json.dumps(summary.model_dump(), indent=2)
+        if output is not None:
+            output.parent.mkdir(parents=True, exist_ok=True)
+            output.write_text(text, encoding="utf-8")
+            console.print(f"[green]Wrote[/green] {output}")
         if json_out:
-            console.print(json.dumps(summary.model_dump(), indent=2))
+            console.print(text)
+            return
+        if output is not None:
             return
         console.print(f"Only in A: {len(summary.only_in_a)}")
         console.print(f"Only in B: {len(summary.only_in_b)}")
