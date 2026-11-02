@@ -77,4 +77,13 @@ def register_ingest_command(app: typer.Typer) -> None:
         payload = json.loads(event_json.read_text(encoding="utf-8"))
         event = TransformationEvent.model_validate(payload)
         target.append(event)
-        console.print(f"[green]Appended[/green] record {event.record_id} → {event.dataset}")
+        summary = {
+            "store": str(store),
+            "record_id": event.record_id,
+            "dataset": event.dataset,
+            "operation": event.operation,
+        }
+        if json_out:
+            console.print(json.dumps(summary, indent=2))
+        else:
+            console.print(f"[green]Appended[/green] record {event.record_id} → {event.dataset}")

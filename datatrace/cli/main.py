@@ -242,14 +242,22 @@ def records(
         help="Only list records that appear in this dataset",
     ),
     json_out: bool = typer.Option(False, "--json", help="Print record IDs as JSON array"),
+    output: Path | None = typer.Option(None, "-o", "--output", help="Write record IDs JSON to file"),
 ) -> None:
     """List record IDs present in the event store."""
     ids = EventStore(store).list_record_ids(dataset=dataset)
     if not ids:
         console.print("[yellow]No records found.[/yellow]")
         raise typer.Exit(code=1)
+    text = json.dumps(ids, indent=2)
+    if output is not None:
+        output.parent.mkdir(parents=True, exist_ok=True)
+        output.write_text(text, encoding="utf-8")
+        console.print(f"[green]Wrote[/green] {output}")
     if json_out:
-        console.print(json.dumps(ids, indent=2))
+        console.print(text)
+        return
+    if output is not None:
         return
     for record_id in ids:
         console.print(record_id)
